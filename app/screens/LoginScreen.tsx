@@ -121,7 +121,6 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 16,
-    borderRadius: 12,
     backgroundColor: "#FFFFFF",
   },
   inputContent: {
@@ -141,10 +140,9 @@ const styles = StyleSheet.create({
   footer: {
     textAlign: "center",
     marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   link: {
-    color: "#6200ee",
     fontWeight: "bold",
   },
   gradient: {
