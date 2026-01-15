@@ -185,7 +185,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   link: {
-    color: "#6200ee",
     fontWeight: "bold",
   },
 });
