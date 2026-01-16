@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import React from "react";
 import {
   KeyboardAvoidingView,
@@ -79,6 +79,7 @@ export default function LoginScreen() {
                   mode="contained"
                   onPress={() => {
                     // TODO: login logic (Supabase later)
+                    router.push("/screens/dashboard/DashboardScreen");
                   }}
                   style={styles.loginButton}
                   contentStyle={styles.loginButtonContent}
@@ -88,7 +89,7 @@ export default function LoginScreen() {
 
                 <Text style={styles.footer}>
                   Not a member?{" "}
-                  <Link href="/screens/SignUpScreen" style={styles.link}>
+                  <Link href="/screens/auth/SignUpScreen" style={styles.link}>
                     Register now
                   </Link>
                 </Text>

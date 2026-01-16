@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import { Text as RNText, StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -107,6 +107,7 @@ export default function SignUpScreen() {
                 mode="contained"
                 onPress={() => {
                   // TODO: Sign up logic (Supabase)
+                  router.push("/screens/auth/OTPVerifyScreen");
                 }}
                 style={styles.signUpButton}
                 contentStyle={styles.buttonContent}
@@ -116,7 +117,7 @@ export default function SignUpScreen() {
 
               <Text style={styles.footer}>
                 Already a member?{" "}
-                <Link href="/screens/LoginScreen">
+                <Link href="/screens/auth/LoginScreen">
                   <Text style={styles.link}>Login</Text>
                 </Link>
               </Text>
