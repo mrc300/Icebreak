@@ -2,6 +2,7 @@ import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router";
 import React from "react";
 
@@ -21,7 +22,7 @@ export default function TabLayout() {
         options={{
           title: "Discover",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="globe-outline" size={24} color={color} />
+            <MaterialCommunityIcons name="radar" size={24} color={color} />
           ),
         }}
       />
