@@ -1,8 +1,8 @@
 // app/(tabs)/index.tsx
 import React from "react";
 import { StyleSheet } from "react-native";
+import LoginScreen from "../screens/auth/LoginScreen";
 // import OTPVerifyScreen from "../screens/OTPVerifyScreen";
-import LoginScreen from "../screens/LoginScreen";
 // import SignUpScreen from "../screens/SignUpScreen";
 // import DashboardScreen from "../screens/DashboardScreen";
 
