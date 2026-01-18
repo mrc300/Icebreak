@@ -23,7 +23,7 @@ export default function LoginScreen() {
       <View style={styles.background}>
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled" // lets you tap outside keyboard
+          keyboardShouldPersistTaps="handled"
         >
           <Card style={styles.sheet} elevation={4}>
             <LinearGradient
@@ -79,7 +79,7 @@ export default function LoginScreen() {
                   mode="contained"
                   onPress={() => {
                     // TODO: login logic (Supabase later)
-                    router.push("/screens/dashboard/DashboardScreen");
+                    router.replace("/(tabs)/discover");
                   }}
                   style={styles.loginButton}
                   contentStyle={styles.loginButtonContent}

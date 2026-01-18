@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   container: {
-    paddingTop: 30,
+    paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 24,
