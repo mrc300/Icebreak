@@ -17,6 +17,9 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}
     >
+
+      
+
       <Tabs.Screen
         name="index"
         options={{
@@ -35,6 +38,31 @@ export default function TabLayout() {
           ),
         }}
       />
+
+
+     <Tabs.Screen
+        name="messages"
+        options={{
+          title: "Chats",
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="bubble.left.and.bubble.right.fill" color={color} />
+          ),
+        }}
+      />
+
+
+
+
+
     </Tabs>
+
+
+
+
+
+
+
+
   );
 }
