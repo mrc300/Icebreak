@@ -38,6 +38,17 @@ export default function ProfileScreen() {
         <Divider style={styles.divider} />
 
         <Button
+          style={styles.button}
+          mode="outlined"
+          onPress={() => {
+            // TODO: Supabase logout
+            // router.replace("/screens/auth/LoginScreen");
+          }}
+        >
+          Chats
+        </Button>
+
+        <Button
           mode="outlined"
           textColor="#D32F2F"
           onPress={() => {
@@ -51,8 +62,6 @@ export default function ProfileScreen() {
     </View>
   );
 }
-
-/* ---------------- Reusable Item ---------------- */
 
 function ProfileItem({ title }: { title: string }) {
   return (
@@ -101,5 +110,9 @@ const styles = StyleSheet.create({
 
   divider: {
     marginVertical: 16,
+  },
+
+  button: {
+    marginBottom: 16,
   },
 });
