@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Avatar, Button, Divider, Text } from "react-native-paper";
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
           textColor="#D32F2F"
           onPress={() => {
             // TODO: Supabase logout
+            router.replace("/screens/auth/LoginScreen");
           }}
         >
           Logout
