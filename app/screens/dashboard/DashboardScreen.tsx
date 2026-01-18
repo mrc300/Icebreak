@@ -1,15 +1,27 @@
+import GradientHeader from "@/app/components/GradientHeader";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 
 export default function DashboardScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>IceBreak Dashboard</Text>
+      <GradientHeader title="IceBreak" subtitle="Discover new connections" />
+
+      <View style={styles.content}>
+        <Text>Your local feed</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-  text: { fontSize: 24, fontWeight: "bold" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F2F2F2",
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
 });
