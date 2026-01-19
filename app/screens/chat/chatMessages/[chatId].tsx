@@ -60,7 +60,6 @@ export default function ChatScreen() {
       locations={[0, 0.5, 1]}
       style={{ flex: 1 }}
     >
-      {/* HEADER */}
       <View style={styles.header}>
         <Ionicons
           name="chevron-back-outline"
