@@ -1,5 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
+import { supabase } from "@/lib/supabase";
 import React from "react";
 import {
   KeyboardAvoidingView,
@@ -14,6 +15,24 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const handleLogin = async () => {
+  if (!email || !password) {
+    alert("Please enter email and password");
+    return;
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  router.replace("/(tabs)/discover");
+};
 
   return (
     <KeyboardAvoidingView
@@ -77,15 +96,13 @@ export default function LoginScreen() {
 
                 <Button
                   mode="contained"
-                  onPress={() => {
-                    // TODO: login logic (Supabase later)
-                    router.replace("/(tabs)/discover");
-                  }}
+                  onPress={handleLogin}
                   style={styles.loginButton}
                   contentStyle={styles.loginButtonContent}
                 >
                   Login
                 </Button>
+
 
                 <Text style={styles.footer}>
                   Not a member?{" "}

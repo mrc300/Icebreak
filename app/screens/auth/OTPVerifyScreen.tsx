@@ -1,6 +1,7 @@
+import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Keyboard,
@@ -13,13 +14,16 @@ import {
 } from "react-native";
 import { Button, Text } from "react-native-paper";
 
-const OTP_LENGTH = 4;
+const OTP_LENGTH = 8;
 
 export default function OTPVerifyScreen() {
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const inputs = useRef<RNTextInput[]>([]);
 
-  const email = "example@email.com"; // pass via params later
+  const { email, name } = useLocalSearchParams<{
+    email: string;
+    name: string;
+  }>();
 
   const handleChange = (text: string, index: number) => {
     if (!/^\d?$/.test(text)) return;
@@ -34,7 +38,6 @@ export default function OTPVerifyScreen() {
       if (index < OTP_LENGTH - 1) {
         inputs.current[index + 1]?.focus();
       } else {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Keyboard.dismiss();
       }
     }
@@ -44,6 +47,43 @@ export default function OTPVerifyScreen() {
     if (key === "Backspace" && !otp[index] && index > 0) {
       inputs.current[index - 1]?.focus();
     }
+  };
+
+  const handleVerify = async () => {
+    const code = otp.join("");
+
+    if (code.length !== OTP_LENGTH) {
+      alert("Enter the full code");
+      return;
+    }
+
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "email",
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+
+
+  };
+
+  const handleResend = async () => {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("New code sent");
   };
 
   return (
@@ -62,7 +102,7 @@ export default function OTPVerifyScreen() {
             <Text variant="headlineMedium" style={styles.title}>
               Enter confirmation code
             </Text>
-            <Text style={styles.subtitle}>A 4-digit code was sent to</Text>
+            <Text style={styles.subtitle}>A 8-digit code was sent to</Text>
             <Text style={styles.email}>{email}</Text>
           </View>
 
@@ -87,21 +127,13 @@ export default function OTPVerifyScreen() {
             ))}
           </View>
 
-          <Text
-            style={styles.resend}
-            onPress={() => {
-              // TODO: resend OTP
-            }}
-          >
+          <Text style={styles.resend} onPress={handleResend}>
             Resend code
           </Text>
 
           <Button
             mode="contained"
-            onPress={() => {
-              // TODO: verify OTP
-              router.push("/screens/dashboard/DashboardScreen");
-            }}
+            onPress={handleVerify}
             style={styles.continueButton}
             contentStyle={styles.buttonContent}
           >
@@ -139,12 +171,12 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginHorizontal: 16,
+    marginHorizontal: 5,
     marginBottom: 24,
   },
   otpInput: {
-    width: 56,
-    height: 56,
+    width: 30,
+    height: 30,
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: "rgba(0,0,0,0.25)",
