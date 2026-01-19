@@ -9,62 +9,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-type User = {
-  name: string;
-  avatar: any;
-};
-
-type Message = {
-  id: string;
-  sender: "me" | "them";
-  text: string;
-};
-
-const users: Record<string, User> = {
-  "1": { name: "Haley James", avatar: require("../../assets/images/dummy_avatars/avatar1.jpg") },
-  "2": { name: "Nathan Scott", avatar: require("../../assets/images/dummy_avatars/avatar2.jpg") },
-  "3": { name: "Brooke Davis", avatar: require("../../assets/images/dummy_avatars/avatar3.jpg") },
-  "4": { name: "Marvin McFadden", avatar: require("../../assets/images/dummy_avatars/avatar4.jpg") },
-  "5": { name: "Peyton Sawyer", avatar: require("../../assets/images/dummy_avatars/avatar5.jpg") },
-};
-
-
-const chatPreview: Record<string, Message[]> = {
-  "1": [
-    { id: "m1", sender: "them", text: "Are you coming tonight?" },
-    { id: "m2", sender: "me", text: "Maybe! Who else is going?" },
-  ],
-  "2": [
-    { id: "m3", sender: "them", text: "Stand up for what you believe in" },
-  ],
-  "3": [
-    { id: "m4", sender: "them", text: "Hey Lucas!" },
-    { id: "m5", sender: "me", text: "Hi Brooke!" },
-    { id: "m6", sender: "them", text: "How's your project going?" },
-  ],
-  "4": [
-    { id: "m7", sender: "them", text: "What are you up to?" },
-  ],
-  "5": [
-    { id: "m8", sender: "them", text: "Hey! What's up ?!" },
-  ],
-};
-
+import { users, chatPreview, times } from "../data/dummyChats";
 
 const chatList = Object.entries(chatPreview).map(([userId, messages]) => {
   const last = messages[messages.length - 1];
-  
-  // Random sample time (but you can hardcode too)
-  const times = ["08:20", "09:44", "15:24", "20:10", "00:12"];
-  
   return {
     userId,
     lastMessage: last.text,
     time: times[Number(userId) - 1] ?? "09:41",
-    unread: ["1", "3", "5"].includes(userId), // mark these as UNREAD
+    unread: ["1", "3", "5"].includes(userId),
   };
 });
+
 
 
 export default function MessagesScreen() {
@@ -78,7 +34,7 @@ export default function MessagesScreen() {
           <View style={styles.header}>
             <Ionicons name="chevron-back-outline" size={24} color="#000" />
             <Text style={styles.headerTitle}>Chats</Text>
-            <View style={{ width: 24 }} /> {/* placeholder to center title */}
+            <View style={{ width: 24 }} /> 
           </View>
 
       <FlatList

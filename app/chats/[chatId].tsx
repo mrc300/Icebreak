@@ -1,166 +1,217 @@
-import { useNavigation } from "@react-navigation/native";
-import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { router, useLocalSearchParams } from "expo-router";
+import React from "react";
 import {
-    Button,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
-// ---- Dummy Data ---- //
-type User = {
-  name: string;
-  avatar: any;
-};
+import { chatPreview, times, users } from "../data/dummyChats";
 
-type Message = {
-  id: string;
-  sender: "me" | "them";
-  text: string;
-};
-
-const users: Record<string, User> = {
-  "1": {
-    name: "Haley James",
-    avatar:  require("../../assets/images/dummy_avatars/avatar1.jpg"),
-  },
-  "3": {
-    name: "Brooke Davis",
-    avatar: require("../../assets/images/dummy_avatars/avatar2.jpg"),
-  },
-};
-
-const chats: Record<string, Message[]> = {
-  "1": [
-    { id: "m1", sender: "them", text: "What are you up to?" },
-    { id: "m2", sender: "me", text: "Studying for tomorrow!" },
-    { id: "m3", sender: "them", text: "Nice! Good luck!" },
-  ],
-  "3": [
-    { id: "m1", sender: "them", text: "Hey Lucas!" },
-    { id: "m2", sender: "me", text: "Hi Brooke!" },
-    { id: "m3", sender: "them", text: "How's your project going?" },
-  ],
-};
-
-// ---- Screen Component ---- //
 export default function ChatScreen() {
   const { chatId } = useLocalSearchParams();
-  const navigation = useNavigation();
-
   const user = users[chatId as string];
-  const [messages, setMessages] = useState<Message[]>(
-    chats[chatId as string] || [],
-  );
-  const [input, setInput] = useState("");
+  const messagesWithoutTime = chatPreview[chatId as string];
 
-  // Set header title dynamically
-  useEffect(() => {
-    if (user) {
-      navigation.setOptions({
-        title: user.name,
-        headerTitleAlign: "center",
-      });
-    }
-  }, [navigation, user]);
+  if (!user || !messagesWithoutTime) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>No conversation found.</Text>
+      </View>
+    );
+  }
 
-  const sendMessage = () => {
+  // Prepare initial messages with timestamps
+  const initialMessages = messagesWithoutTime.map((m, i) => ({
+    ...m,
+    time: times[i] ?? "09:41",
+  }));
+
+  const [chatMessages, setChatMessages] = React.useState(initialMessages);
+  const [input, setInput] = React.useState("");
+
+  function sendMessage() {
     if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now().toString(), sender: "me", text: input },
-    ]);
+
+    const newMessage = {
+      id: Date.now().toString(),
+      sender: "me" as const,
+      text: input,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    setChatMessages((prev) => [...prev, newMessage]);
     setInput("");
-  };
+  }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={90} // adjusts for header
+    <LinearGradient
+      colors={["#FFFFFF", "#A4E4FF", "#FFC8E9"]}
+      locations={[0, 0.5, 1]}
+      style={{ flex: 1 }}
     >
-      <FlatList
-        data={messages}
-        keyExtractor={(m) => m.id}
-        contentContainerStyle={styles.messagesContainer}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.bubble,
-              item.sender === "me" ? styles.meBubble : styles.themBubble,
-            ]}
-          >
-            <Text
-              style={item.sender === "me" ? styles.meText : styles.themText}
-            >
-              {item.text}
-            </Text>
-          </View>
-        )}
-      />
-
-      <View style={styles.inputRow}>
-        <TextInput
-          value={input}
-          onChangeText={setInput}
-          placeholder={`Message ${user?.name}`}
-          style={styles.input}
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Ionicons
+          name="chevron-back-outline"
+          size={26}
+          color="#000"
+          onPress={() => router.back()}
         />
-        <Button title="Send" onPress={sendMessage} />
+
+        <Text style={styles.headerTitle}>{user.name}</Text>
+
+        <Image source={user.avatar} style={styles.headerAvatar} />
       </View>
-    </KeyboardAvoidingView>
+
+      {/* MESSAGES AREA */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <FlatList
+          data={chatMessages}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
+          renderItem={({ item }) => {
+            const isMe = item.sender === "me";
+            return (
+              <View style={{ marginBottom: 12 }}>
+                <View
+                  style={[
+                    styles.bubble,
+                    isMe ? styles.meBubble : styles.themBubble,
+                  ]}
+                >
+                  <Text style={isMe ? styles.meText : styles.themText}>
+                    {item.text}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.time,
+                    isMe ? styles.timeRight : styles.timeLeft,
+                  ]}
+                >
+                  {item.time}
+                </Text>
+              </View>
+            );
+          }}
+        />
+
+   
+        <View style={styles.inputBar}>
+          <Ionicons
+            name="add-sharp"
+            size={25}
+            color="#006FFD"
+            style={{ marginRight: 8 }}
+          />
+
+          <TextInput
+            value={input}
+            onChangeText={setInput}
+            placeholder="Type a message..."
+            placeholderTextColor="#999"
+            style={styles.input}
+            onSubmitEditing={sendMessage}
+          />
+
+          {input.trim().length > 0 && (
+            <Ionicons
+              name="send"
+              size={20}
+              color="#007AFF"
+              onPress={sendMessage}
+              style={{ marginLeft: 8 }}
+            />
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
-// ---- Styles ---- //
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF",
+  header: {
+    paddingTop: 75,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 30,
   },
-  messagesContainer: {
-    padding: 12,
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  headerAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   bubble: {
+    maxWidth: "75%",
     paddingVertical: 8,
     paddingHorizontal: 12,
-    marginBottom: 8,
-    maxWidth: "80%",
     borderRadius: 18,
   },
   meBubble: {
     alignSelf: "flex-end",
-    backgroundColor: "#007AFF",
+    backgroundColor: "#FFC8E9",
   },
   themBubble: {
     alignSelf: "flex-start",
-    backgroundColor: "#E5E5EA",
+    backgroundColor: "#FFFFFF",
   },
   meText: {
-    color: "white",
+    color: "#000",
+    fontSize: 14,
   },
   themText: {
-    color: "black",
+    color: "#000",
+    fontSize: 14,
   },
-  inputRow: {
+  time: {
+    fontSize: 10,
+    marginTop: 2,
+    opacity: 0.7,
+  },
+  timeLeft: { alignSelf: "flex-start" },
+  timeRight: { alignSelf: "flex-end" },
+  inputBar: {
     flexDirection: "row",
-    padding: 10,
-    borderTopWidth: 1,
-    borderColor: "#EEE",
-    backgroundColor: "#FFF",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    backgroundColor: "transparent",
+    borderTopWidth: 0,
+    borderColor: "transparentr",
+
+    
+    marginBottom: 10,
   },
   input: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#C7C7CC",
     borderWidth: 1,
-    borderColor: "#CCC",
-    borderRadius: 18,
+    borderRadius: 30,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    marginRight: 8,
-    height: 40,
+    fontSize: 15,
+    marginRight: 6,
   },
 });
