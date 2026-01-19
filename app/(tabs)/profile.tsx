@@ -42,7 +42,7 @@ export default function ProfileScreen() {
           mode="outlined"
           onPress={() => {
             // TODO: Supabase logout
-            // router.replace("/screens/auth/LoginScreen");
+            router.replace("/screens/chat/MessagesScreen");
           }}
         >
           Chats
