@@ -1,6 +1,7 @@
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Feather } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router";
@@ -31,6 +32,16 @@ export default function TabLayout() {
           title: "Discover",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="radar" size={24} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color }) => (
+            <Feather name="home" size={24} color={color} />
           ),
         }}
       />
