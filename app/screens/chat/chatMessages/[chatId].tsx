@@ -1,7 +1,8 @@
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -13,45 +14,134 @@ import {
   View,
 } from "react-native";
 
-import { chatPreview, times, users } from "../chatMessages/dummyChats";
+type Message = {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+};
 
 export default function ChatScreen() {
-  const { chatId } = useLocalSearchParams();
-  const user = users[chatId as string];
-  const messagesWithoutTime = chatPreview[chatId as string];
+  const { chatId } = useLocalSearchParams<{ chatId: string }>();
 
-  if (!user || !messagesWithoutTime) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>No conversation found.</Text>
-      </View>
-    );
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [otherUser, setOtherUser] = useState<{
+    name: string;
+    avatar_url: string | null;
+  } | null>(null);
+
+  // 🔹 Load current user once
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id ?? null);
+    });
+  }, []);
+
+  // 🔹 Load messages + other user + realtime
+  useEffect(() => {
+    if (!chatId) return;
+
+    loadMessages();
+    loadOtherUser();
+
+    const channel = supabase
+      .channel(`chat-${chatId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `chat_id=eq.${chatId}`,
+        },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chatId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!chatId || !currentUserId) return;
+
+      const markRead = async () => {
+        const { error } = await supabase
+          .from("chat_members")
+          .update({ last_read_at: new Date().toISOString() })
+          .eq("chat_id", chatId)
+          .eq("user_id", currentUserId);
+
+        console.log("markRead error:", error);
+      };
+
+      markRead();
+    }, [chatId, currentUserId]),
+  );
+
+  // 1️⃣ Load messages
+  async function loadMessages() {
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("chat_id", chatId)
+      .order("created_at", { ascending: true });
+
+    setMessages(data ?? []);
   }
 
-  // Prepare initial messages with timestamps
-  const initialMessages = messagesWithoutTime.map((m, i) => ({
-    ...m,
-    time: times[i] ?? "09:41",
-  }));
+  // 2️⃣ Load other user
+  async function loadOtherUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const [chatMessages, setChatMessages] = React.useState(initialMessages);
-  const [input, setInput] = React.useState("");
+    if (!user) return;
 
-  function sendMessage() {
-    if (!input.trim()) return;
+    const { data: member } = await supabase
+      .from("chat_members")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .neq("user_id", user.id)
+      .single();
 
-    const newMessage = {
-      id: Date.now().toString(),
-      sender: "me" as const,
-      text: input,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+    if (!member) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name, avatar_url")
+      .eq("id", member.user_id)
+      .single();
+
+    setOtherUser(profile);
+  }
+
+  async function sendMessage() {
+    if (!input.trim() || !currentUserId) return;
+
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      sender_id: currentUserId,
+      content: input,
+      created_at: new Date().toISOString(),
     };
 
-    setChatMessages((prev) => [...prev, newMessage]);
+    // 1️⃣ Show instantly
+    setMessages((prev) => [...prev, optimisticMessage]);
     setInput("");
+
+    // 2️⃣ Save to DB
+    await supabase.from("messages").insert({
+      chat_id: chatId,
+      sender_id: currentUserId,
+      content: optimisticMessage.content,
+    });
   }
 
   return (
@@ -60,6 +150,7 @@ export default function ChatScreen() {
       locations={[0, 0.5, 1]}
       style={{ flex: 1 }}
     >
+      {/* HEADER */}
       <View style={styles.header}>
         <Ionicons
           name="chevron-back-outline"
@@ -68,22 +159,30 @@ export default function ChatScreen() {
           onPress={() => router.back()}
         />
 
-        <Text style={styles.headerTitle}>{user.name}</Text>
+        <Text style={styles.headerTitle}>{otherUser?.name ?? "Chat"}</Text>
 
-        <Image source={user.avatar} style={styles.headerAvatar} />
+        {otherUser?.avatar_url ? (
+          <Image
+            source={{ uri: otherUser.avatar_url }}
+            style={styles.headerAvatar}
+          />
+        ) : (
+          <View style={styles.headerAvatar} />
+        )}
       </View>
 
-      {/* MESSAGES AREA */}
+      {/* MESSAGES */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         <FlatList
-          data={chatMessages}
+          data={messages}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
           renderItem={({ item }) => {
-            const isMe = item.sender === "me";
+            const isMe = item.sender_id === currentUserId;
+
             return (
               <View style={{ marginBottom: 12 }}>
                 <View
@@ -93,30 +192,28 @@ export default function ChatScreen() {
                   ]}
                 >
                   <Text style={isMe ? styles.meText : styles.themText}>
-                    {item.text}
+                    {item.content}
                   </Text>
                 </View>
+
                 <Text
                   style={[
                     styles.time,
                     isMe ? styles.timeRight : styles.timeLeft,
                   ]}
                 >
-                  {item.time}
+                  {new Date(item.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </Text>
               </View>
             );
           }}
         />
 
+        {/* INPUT */}
         <View style={styles.inputBar}>
-          <Ionicons
-            name="add-sharp"
-            size={25}
-            color="#006FFD"
-            style={{ marginRight: 8 }}
-          />
-
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -197,7 +294,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     borderTopWidth: 0,
     borderColor: "transparentr",
-
     marginBottom: 10,
   },
   input: {
