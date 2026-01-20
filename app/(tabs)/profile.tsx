@@ -1,89 +1,95 @@
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
-import { StyleSheet, View } from "react-native";
-import { Avatar, Button, Divider, Text } from "react-native-paper";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Avatar, Card, Text } from "react-native-paper";
+import GradientHeader from "../components/GradientHeader";
 
 export default function ProfileScreen() {
   const user = {
     name: "Abhirukth",
-    email: "abhirukth@email.com",
+    description: "Building IceBreak • CS @ UCPH",
+    connections: 128,
+    chats: 128,
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={["#FFFFFF", "#A4E4FF", "#FED1FD"]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.header}
-      >
-        <Avatar.Text
-          size={72}
-          label={user.name.charAt(0)}
-          style={styles.avatar}
-        />
-        <Text variant="titleLarge" style={styles.name}>
-          {user.name}
-        </Text>
-        <Text style={styles.email}>{user.email}</Text>
-      </LinearGradient>
+    <LinearGradient
+      colors={["#FFFFFF", "#A4E4FF6E", "#FFC8E9B8"]}
+      locations={[0.43, 0.8, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={{ flex: 1 }}
+    >
+      <GradientHeader title="Profile" subtitle="My profile" />
 
       <View style={styles.content}>
-        <ProfileItem title="Edit Profile" />
-        <ProfileItem title="Account Settings" />
-        <ProfileItem title="Privacy & Security" />
-        <ProfileItem title="Help & Support" />
+        <View style={styles.centerWrapper}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => router.push("/screens/profile/SettingsScreen")}
+          >
+            <Ionicons name="settings-sharp" size={28} color="#6FBAFF" />
+          </TouchableOpacity>
 
-        <Divider style={styles.divider} />
+          <View style={styles.centerSection}>
+            <Avatar.Text
+              size={150}
+              label={user.name.charAt(0)}
+              style={styles.avatar}
+            />
+            <Text style={styles.name}>{user.name}</Text>
+            <Text style={styles.description}>{user.description}</Text>
+          </View>
+        </View>
 
-        <Button
-          style={styles.button}
-          mode="outlined"
-          onPress={() => {
-            // TODO: Supabase logout
-            router.replace("/screens/chat/MessagesScreen");
-          }}
-        >
-          Chats
-        </Button>
+        <View style={styles.statsRow}>
+          <Card style={styles.statCard} elevation={2}>
+            <Card.Content style={styles.statContent}>
+              <Ionicons name="person" size={24} color="#6FBAFF" />
+              <Text style={styles.statNumber}>{user.connections}</Text>
+              <Text style={styles.statLabel}>Connections</Text>
+            </Card.Content>
+          </Card>
 
-        <Button
-          mode="outlined"
-          textColor="#D32F2F"
-          onPress={() => {
-            // TODO: Supabase logout
-            router.replace("/screens/auth/LoginScreen");
-          }}
-        >
-          Logout
-        </Button>
+          <Card
+            style={styles.statCard}
+            elevation={2}
+            onPress={() => router.push("/screens/chat/MessagesScreen")}
+          >
+            <Card.Content style={styles.statContent}>
+              <FontAwesome name="comment" size={24} color="#6FBAFF" />
+              <Text style={styles.statNumber}>{user.chats}</Text>
+              <Text style={styles.statLabel}>Chats</Text>
+            </Card.Content>
+          </Card>
+        </View>
       </View>
-    </View>
-  );
-}
-
-function ProfileItem({ title }: { title: string }) {
-  return (
-    <View style={styles.item}>
-      <Text variant="bodyLarge">{title}</Text>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F2F2F2",
+  content: {
+    padding: 16,
   },
 
-  header: {
-    paddingTop: 60,
-    paddingBottom: 32,
+  centerWrapper: {
+    position: "relative", // for absolute positioning of settings
+    marginBottom: 24,
     alignItems: "center",
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    elevation: 4,
+  },
+
+  settingsButton: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    zIndex: 1,
+  },
+
+  centerSection: {
+    alignItems: "center",
   },
 
   avatar: {
@@ -92,27 +98,41 @@ const styles = StyleSheet.create({
   },
 
   name: {
+    fontSize: 20,
     fontWeight: "bold",
   },
 
-  email: {
-    marginTop: 4,
-    color: "#555",
+  description: {
+    marginTop: 6,
+    color: "#666",
+    textAlign: "center",
   },
 
-  content: {
-    padding: 20,
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
   },
 
-  item: {
-    paddingVertical: 16,
+  statCard: {
+    width: "30%",
+    aspectRatio: 1,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
-  divider: {
-    marginVertical: 16,
+  statContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
-  button: {
-    marginBottom: 16,
+  statNumber: {
+    fontSize: 24,
+  },
+
+  statLabel: {
+    color: "#666",
   },
 });
