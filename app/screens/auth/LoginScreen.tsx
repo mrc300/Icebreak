@@ -1,6 +1,6 @@
+import { supabase } from "@/lib/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
-import { supabase } from "@/lib/supabase";
 import React from "react";
 import {
   KeyboardAvoidingView,
@@ -16,23 +16,23 @@ export default function LoginScreen() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const handleLogin = async () => {
-  if (!email || !password) {
-    alert("Please enter email and password");
-    return;
-  }
+    if (!email || !password) {
+      alert("Please enter email and password");
+      return;
+    }
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
-  router.replace("/(tabs)/discover");
-};
+    router.replace("/(tabs)/home");
+  };
 
   return (
     <KeyboardAvoidingView
@@ -102,7 +102,6 @@ export default function LoginScreen() {
                 >
                   Login
                 </Button>
-
 
                 <Text style={styles.footer}>
                   Not a member?{" "}
