@@ -1,6 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import {
   FlatList,
   Image,
@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { users, chatPreview, times } from "../data/dummyChats";
+import { chatPreview, times, users } from "../data/dummyChats";
 
 const chatList = Object.entries(chatPreview).map(([userId, messages]) => {
   const last = messages[messages.length - 1];
@@ -21,8 +21,6 @@ const chatList = Object.entries(chatPreview).map(([userId, messages]) => {
   };
 });
 
-
-
 export default function MessagesScreen() {
   return (
     <LinearGradient
@@ -30,12 +28,11 @@ export default function MessagesScreen() {
       locations={[0, 0.5, 1]}
       style={styles.container}
     >
-      
-          <View style={styles.header}>
-            <Ionicons name="chevron-back-outline" size={24} color="#000" />
-            <Text style={styles.headerTitle}>Chats</Text>
-            <View style={{ width: 24 }} /> 
-          </View>
+      <View style={styles.header}>
+        <Ionicons name="chevron-back-outline" size={24} color="#000" />
+        <Text style={styles.headerTitle}>Chats</Text>
+        <View style={{ width: 24 }} />
+      </View>
 
       <FlatList
         data={chatList}
@@ -84,17 +81,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   header: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  paddingVertical: 16,
-  marginBottom: 50
-  ,
-},
-headerTitle: {
-  fontSize: 20,
-  fontWeight: "600",
-},
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    marginBottom: 50,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
 
   headerText: {
     textAlign: "center",
@@ -147,14 +143,12 @@ headerTitle: {
     color: "#111",
   },
 
-
   footerNote: {
-  textAlign: "center",
-  fontSize: 12,
-  color: "#555",
-  opacity: 0.7,
-  marginBottom: 15,
-  marginTop: 4,
-},
-
+    textAlign: "center",
+    fontSize: 12,
+    color: "#555",
+    opacity: 0.7,
+    marginBottom: 15,
+    marginTop: 4,
+  },
 });
