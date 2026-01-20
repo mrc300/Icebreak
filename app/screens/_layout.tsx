@@ -11,7 +11,6 @@ export default function ScreenLayout() {
   );
   const segments = useSegments();
 
-  // 1️⃣ Get initial session + listen for auth changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -23,7 +22,6 @@ export default function ScreenLayout() {
         setSession(session);
         setOnboardingComplete(null);
 
-        // 🔥 CRITICAL FIX: ensure profile exists
         if (event === "SIGNED_IN" && session?.user) {
           await supabase.from("profiles").upsert({
             id: session.user.id,
@@ -39,7 +37,6 @@ export default function ScreenLayout() {
     };
   }, []);
 
-  // 2️⃣ Fetch onboarding state (SAFE: profile guaranteed to exist)
   useEffect(() => {
     if (!session) return;
 
@@ -59,33 +56,34 @@ export default function ScreenLayout() {
       });
   }, [session]);
 
-  // 3️⃣ Routing logic (ONLY in effects)
   useEffect(() => {
     if (loading || onboardingComplete === null) return;
 
+
+    
     const inAuth = segments[0] === "screens" && segments[1] === "auth";
     const inOnboarding =
       segments[0] === "screens" && segments[1] === "onboarding";
 
-    // 🚫 Not logged in → auth
+ 
     if (!session && !inAuth) {
       router.replace("/screens/auth/LoginScreen");
       return;
     }
 
-    // 🟡 Logged in but onboarding incomplete → onboarding
+  
     if (session && onboardingComplete === false && !inOnboarding) {
       router.replace("/screens/onboarding/BioScreen");
       return;
     }
 
-    // ✅ Logged in + onboarding done → tabs
+  
     if (session && onboardingComplete === true && (inAuth || inOnboarding)) {
       router.replace("/(tabs)/discover");
     }
   }, [loading, session, onboardingComplete, segments]);
 
-  // 4️⃣ Loading screen (prevents flicker & loops)
+  
   if (loading || (session && onboardingComplete === null)) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
