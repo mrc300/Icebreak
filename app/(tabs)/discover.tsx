@@ -1,5 +1,6 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Avatar, Card, Divider, Text } from "react-native-paper";
@@ -38,7 +39,13 @@ const posts = [
 
 export default function DiscoverScreen() {
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={["#FFFFFF", "#A4E4FF6E", "#FFC8E9B8"]}
+      locations={[0.43, 0.8, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={{ flex: 1 }}
+    >
       <GradientHeader title="IceBreak" subtitle="Discover new connections" />
 
       <FlatList
@@ -47,7 +54,6 @@ export default function DiscoverScreen() {
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <Card style={styles.card} elevation={2}>
-            {/* Profile row */}
             <View style={styles.profileRow}>
               <Avatar.Image size={40} source={{ uri: item.avatar }} />
               <View style={styles.profileText}>
@@ -75,7 +81,7 @@ export default function DiscoverScreen() {
           </Card>
         )}
       />
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -86,6 +92,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 12,
     overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.9)",
   },
   profileRow: {
     flexDirection: "row",

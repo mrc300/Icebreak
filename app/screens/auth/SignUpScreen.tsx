@@ -4,11 +4,6 @@ import React, { useState } from "react";
 import { Text as RNText, StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Button, Card, Checkbox, Text, TextInput } from "react-native-paper";
-import { supabase } from "@/lib/supabase";
-
-
-
-
 
 export default function SignUpScreen() {
   const [name, setName] = useState("");
@@ -18,44 +13,6 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleSignUp = async () => {
- 
-  if (loading) return;
-  if (!name.trim()) {
-    alert("Name is required");
-    return;
-  }
-
-
-  if (password !== confirmPassword) {
-    alert("Passwords do not match");
-    return;
-  }
-
-  setLoading(true);
-
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-    data: { name },
-  },
-  });
-
-  
-  setLoading(false);
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  router.push({
-    pathname: "/screens/auth/OTPVerifyScreen",
-    params: { email, name },
-  });
-};
 
   return (
     <View style={styles.background}>
@@ -147,17 +104,16 @@ export default function SignUpScreen() {
               </View>
 
               <Button
-                    mode="contained"
-                    onPress={handleSignUp}
-                    loading={loading}
-                    disabled={loading}
-                    style={styles.signUpButton}
-                    contentStyle={styles.buttonContent}
-                  >
-                    Sign Up
-                  </Button>
-
-              
+                mode="contained"
+                onPress={() => {
+                  // TODO: Sign up logic (Supabase)
+                  router.push("/screens/auth/OTPVerifyScreen");
+                }}
+                style={styles.signUpButton}
+                contentStyle={styles.buttonContent}
+              >
+                Sign Up
+              </Button>
 
               <Text style={styles.footer}>
                 Already a member?{" "}
@@ -172,10 +128,6 @@ export default function SignUpScreen() {
     </View>
   );
 }
-
-
-
-
 
 const styles = StyleSheet.create({
   background: {
