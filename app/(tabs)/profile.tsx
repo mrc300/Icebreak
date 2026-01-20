@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Avatar, Button, Divider, Text } from "react-native-paper";
+import { supabase } from "@/lib/supabase";
 
 export default function ProfileScreen() {
   const user = {
@@ -49,15 +50,16 @@ export default function ProfileScreen() {
         </Button>
 
         <Button
-          mode="outlined"
-          textColor="#D32F2F"
-          onPress={() => {
-            // TODO: Supabase logout
-            router.replace("/screens/auth/LoginScreen");
-          }}
-        >
-          Logout
-        </Button>
+              mode="outlined"
+              textColor="#D32F2F"
+              onPress={async () => {
+                await supabase.auth.signOut();
+                router.replace("/screens/auth/LoginScreen");
+              }}
+            >
+              Logout
+            </Button>
+
       </View>
     </View>
   );

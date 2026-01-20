@@ -7,38 +7,43 @@ import { router,  useLocalSearchParams } from "expo-router";
 export default function BioScreen() {
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  const { name } = useLocalSearchParams<{ name: string }>();
+
   const saveBio = async () => {
     if (!bio.trim()) {
       alert("Please add a short bio");
       return;
     }
 
+    if (loading) return;
+    setLoading(true);
+
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user || userError) {
+      setLoading(false);
       alert("Not authenticated");
       return;
     }
 
     const { error } = await supabase
       .from("profiles")
-      .update({       
-        bio,        
+      .update({
+        bio: bio.trim(),
       })
       .eq("id", user.id);
 
     if (error) {
+      setLoading(false);
       alert(error.message);
       return;
     }
 
+    setLoading(false);
     router.push("/screens/onboarding/InterestsScreen");
   };
-
 
   return (
     <View style={styles.container}>
@@ -52,6 +57,7 @@ export default function BioScreen() {
         onChangeText={setBio}
         multiline
         numberOfLines={4}
+        maxLength={200}
         style={styles.input}
       />
 
@@ -59,13 +65,14 @@ export default function BioScreen() {
         mode="contained"
         onPress={saveBio}
         loading={loading}
-        disabled={loading}
+        disabled={loading || !bio.trim()}
       >
         Continue
       </Button>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

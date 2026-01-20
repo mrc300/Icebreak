@@ -23,6 +23,8 @@ export default function InterestsScreen() {
       });
   }, []);
 
+
+
   const toggle = (id: number) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -55,16 +57,10 @@ const saveInterests = async () => {
 
     await supabase.from("user_interests").insert(rows);
 
-    await supabase
-      .from("profiles")
-      .update({ onboarding_completed: true })
-      .eq("id", user.id);
-
-   
-    await supabase.auth.refreshSession();
 
     setLoading(false);
 
+    router.push("/screens/onboarding/AvatarScreen");
 
   };
 

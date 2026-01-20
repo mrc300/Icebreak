@@ -293,7 +293,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#555",
     opacity: 0.7,
-    marginBottom: 15,
+    marginBottom: 50
+,
     marginTop: 4,
   },
   emptyContainer: {
