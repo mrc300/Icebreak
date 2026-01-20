@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabase";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
@@ -13,6 +14,41 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSignUp = async () => {
+    if (loading) return;
+    if (!name.trim()) {
+      alert("Name is required");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+      },
+    });
+
+    setLoading(false);
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    router.push({
+      pathname: "/screens/auth/OTPVerifyScreen",
+      params: { email, name },
+    });
+  };
 
   return (
     <View style={styles.background}>
@@ -105,10 +141,9 @@ export default function SignUpScreen() {
 
               <Button
                 mode="contained"
-                onPress={() => {
-                  // TODO: Sign up logic (Supabase)
-                  router.push("/screens/auth/OTPVerifyScreen");
-                }}
+                onPress={handleSignUp}
+                loading={loading}
+                disabled={loading}
                 style={styles.signUpButton}
                 contentStyle={styles.buttonContent}
               >
