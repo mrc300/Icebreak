@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabase";
 import {
   AntDesign,
   Feather,
@@ -53,6 +54,17 @@ const settingsOptions = [
 export default function SettingsScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+
+      router.replace("/screens/auth/LoginScreen");
+    } catch (error: any) {
+      console.error("Logout error:", error.message);
+      alert("Failed to logout. Try again.");
+    }
+  };
+
   return (
     <LinearGradient
       colors={["#FFFFFF", "#A4E4FF6E", "#FFC8E9B8"]}
@@ -61,6 +73,7 @@ export default function SettingsScreen() {
       end={{ x: 0.5, y: 1 }}
       style={{ flex: 1 }}
     >
+      {/* Top Bar */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.back()}>
           <AntDesign name="left" size={24} color="#555" />
@@ -69,6 +82,7 @@ export default function SettingsScreen() {
         <View style={{ width: 28 }} />
       </View>
 
+      {/* Settings Options */}
       <FlatList
         data={settingsOptions}
         keyExtractor={(item) => item.label}
@@ -86,6 +100,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       />
 
+      {/* Logout Button */}
       <View style={styles.logoutContainer}>
         <TouchableOpacity
           style={styles.logoutButton}
@@ -96,6 +111,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Logout Confirmation Modal */}
       <Modal
         transparent
         visible={showLogoutModal}
@@ -103,10 +119,8 @@ export default function SettingsScreen() {
         onRequestClose={() => setShowLogoutModal(false)}
       >
         <View style={styles.modalOverlay}>
-          {/* Dark semi-transparent overlay */}
           <View style={styles.darkOverlay} />
 
-          {/* Centered modal */}
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Confirm Logout</Text>
             <Text style={styles.modalMessage}>
@@ -123,7 +137,7 @@ export default function SettingsScreen() {
 
               <Pressable
                 style={[styles.modalButton, styles.confirmButton]}
-                onPress={() => router.replace("/screens/auth/LoginScreen")}
+                onPress={handleLogout}
               >
                 <Text style={styles.confirmText}>Logout</Text>
               </Pressable>
@@ -144,43 +158,26 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 16,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#555",
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-  },
+  title: { fontSize: 20, fontWeight: "bold", color: "#555" },
+  listContent: { paddingHorizontal: 16, paddingBottom: 100 },
   optionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 20,
     paddingHorizontal: 12,
-    backgroundColor: "transparent",
     borderRadius: 12,
     marginVertical: 6,
   },
-  optionLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  optionLeft: { flexDirection: "row", alignItems: "center" },
   optionText: {
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
     marginLeft: 12,
   },
-  separator: {
-    height: 1,
-    backgroundColor: "rgba(0,0,0,0.1)",
-    marginHorizontal: 12,
-  },
-  logoutContainer: {
-    padding: 32,
-  },
+  separator: { height: 0 },
+  logoutContainer: { padding: 32 },
   logoutButton: {
     flexDirection: "row",
     justifyContent: "center",
@@ -209,11 +206,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 2,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
   modalMessage: {
     fontSize: 16,
     color: "#555",
@@ -231,22 +224,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  cancelButton: {
-    backgroundColor: "rgba(0,0,0,0.1)",
-    marginRight: 8,
-  },
-  confirmButton: {
-    backgroundColor: "#D32F2F",
-    marginLeft: 8,
-  },
-  cancelText: {
-    color: "#333",
-    fontWeight: "bold",
-  },
-  confirmText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+  cancelButton: { backgroundColor: "rgba(0,0,0,0.1)", marginRight: 8 },
+  confirmButton: { backgroundColor: "#D32F2F", marginLeft: 8 },
+  cancelText: { color: "#333", fontWeight: "bold" },
+  confirmText: { color: "#fff", fontWeight: "bold" },
   darkOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.4)",
