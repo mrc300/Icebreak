@@ -47,6 +47,7 @@ export default function LoginScreen() {
           <Card style={styles.sheet} elevation={4}>
             <LinearGradient
               colors={["#FFFFFF", "#A4E4FF", "#FED1FD"]}
+              locations={[0.43, 0.8, 1]}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}
               style={styles.gradient}
@@ -88,7 +89,7 @@ export default function LoginScreen() {
                 <Text
                   style={styles.forgot}
                   onPress={() => {
-                    // TODO: forgot password
+                    router.push("/screens/auth/ForgotPasswordEmail");
                   }}
                 >
                   Forgot Password?
