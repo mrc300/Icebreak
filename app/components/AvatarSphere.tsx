@@ -307,7 +307,6 @@ const styles = StyleSheet.create({
   focusedAvatar: {
     elevation: 6,
   },
-
   preview: {
     alignSelf: "center",
     marginTop: -20,
