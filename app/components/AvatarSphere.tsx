@@ -1,6 +1,8 @@
+import { supabase } from "@/lib/supabase";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useMemo, useRef, useState } from "react";
+import { router } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -20,20 +22,26 @@ const SIZE = width;
 const RADIUS = SIZE * 0.35;
 const CENTER = SIZE / 2;
 
-const AVATARS = Array.from({ length: 15 }).map((_, i) => ({
-  id: i.toString(),
-  name: `User ${i + 1}`,
-  description: "Building IceBreak • CS @ UCPH",
-  headsUp: Math.floor(Math.random() * 120) + 10,
-  uri: `https://i.pravatar.cc/150?img=${i + 20}`,
-}));
+type DiscoverUser = {
+  id: string;
+  name: string;
+  bio: string;
+  avatar_url: string;
+  distance_m: number;
+  interests: string[];
+};
 
-export default function AvatarSphere() {
+export default function usersphere() {
+  const [radarEnabled, setRadarEnabled] = useState<boolean | null>(null);
+
   const [rotationX, setRotationX] = useState(0);
   const [rotationY, setRotationY] = useState(0);
   const [focused, setFocused] = useState<any>(null);
 
   const [sheetVisible, setSheetVisible] = useState(false);
+
+  const [users, setUsers] = useState<DiscoverUser[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const velocity = useRef({ x: 0, y: 0 });
   const lastTouch = useRef({ x: 0, y: 0 });
@@ -56,8 +64,169 @@ export default function AvatarSphere() {
       toValue: height,
       duration: 220,
       useNativeDriver: true,
-    }).start(() => setSheetVisible(false));
+    }).start(() => {
+      setSheetVisible(false);
+      setFocused(null);
+    });
   };
+
+  const sendHeadsUp = async (otherUserId: string) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    // 1️⃣ Create or reuse chat
+    const { data: chatId, error } = await supabase.rpc(
+      "create_chat_with_members",
+      { other_user: otherUserId },
+    );
+
+    if (error || !chatId) {
+      console.error("Heads Up chat error:", error);
+      return;
+    }
+
+    await supabase.from("messages").insert({
+      chat_id: chatId,
+      sender_id: user.id,
+      content: "👋 Heads up!",
+    });
+
+    closeSheet();
+
+    router.push({
+      pathname: "/screens/chat/chatMessages/[chatId]",
+      params: { chatId },
+    });
+  };
+
+  const fetchDiscoverFeed = async () => {
+    setLoading(true);
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setUsers([]);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("radar_enabled")
+        .eq("id", user.id)
+        .single();
+
+      setRadarEnabled(profile?.radar_enabled ?? false);
+
+      const lat = 55.6761;
+      const lng = 12.5683;
+
+      const { data: nearby, error: nearbyError } = await supabase.rpc(
+        "nearby_users",
+        { lat, lng, radius_m: 100 },
+      );
+
+      if (nearbyError) throw nearbyError;
+      if (!nearby || nearby.length === 0) {
+        setUsers([]);
+        return;
+      }
+
+      const userIds = nearby
+        .map((r: any) => r.user_id)
+        .filter((id: string) => id !== user.id);
+
+      if (userIds.length === 0) {
+        setUsers([]);
+        return;
+      }
+
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select(
+          `
+    id,
+    name,
+    bio,
+    avatar_url,
+    radar_enabled,
+    user_interests (
+      interests (
+        name
+      )
+    )
+  `,
+        )
+        .in("id", userIds)
+        .eq("radar_enabled", true);
+
+      if (profileError) throw profileError;
+      if (!profiles) {
+        setUsers([]);
+        return;
+      }
+
+      const formatted: DiscoverUser[] = profiles.map((p: any) => {
+        const distance = nearby.find(
+          (n: any) => n.user_id === p.id,
+        )?.distance_m;
+
+        const interests =
+          p.user_interests?.map((ui: any) => ui.interests.name) ?? [];
+
+        return {
+          id: p.id,
+          name: p.name ?? "Unknown",
+          bio: p.bio ?? "",
+          avatar_url: p.avatar_url,
+          distance_m: Math.round(distance ?? 0),
+          interests,
+        };
+      });
+
+      setUsers(formatted);
+    } catch (err) {
+      console.error("Sphere fetch error:", err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isFetching = useRef(false);
+
+  const safeFetch = async () => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+
+    await fetchDiscoverFeed();
+
+    isFetching.current = false;
+  };
+
+  useEffect(() => {
+    if (!radarEnabled) return;
+
+    const interval = setInterval(fetchDiscoverFeed, 5000);
+    return () => clearInterval(interval);
+  }, [radarEnabled]);
+
+  useEffect(() => {
+    fetchDiscoverFeed();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDiscoverFeed();
+    }, 5000); // 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const applyMomentum = () => {
     velocity.current.x *= 0.94;
@@ -103,9 +272,9 @@ export default function AvatarSphere() {
   });
 
   const nodes = useMemo(() => {
-    return AVATARS.map((item, i) => {
-      const theta = Math.acos(1 - (2 * (i + 1)) / AVATARS.length);
-      const phi = Math.sqrt(AVATARS.length * Math.PI) * theta;
+    return users.map((item, i) => {
+      const theta = Math.acos(1 - (2 * (i + 1)) / users.length);
+      const phi = Math.sqrt(users.length * Math.PI) * theta;
 
       let x = RADIUS * Math.sin(theta) * Math.cos(phi);
       let y = RADIUS * Math.cos(theta);
@@ -174,8 +343,42 @@ export default function AvatarSphere() {
     setRotationY((r) => r + Math.atan2(n.x, n.z));
     setRotationX((r) => r - Math.atan2(n.y, n.z));
 
-    setFocused(n);
+    setFocused({
+      id: n.id,
+      name: n.name,
+      bio: n.bio,
+      avatar_url: n.avatar_url,
+      interests: n.interests ?? [],
+    });
   };
+
+  if (radarEnabled === false) {
+    return (
+      <View style={styles.disabledContainer}>
+        <Card style={styles.disabledCard}>
+          <Text style={styles.disabledTitle}>Radar is off</Text>
+          <Text style={styles.disabledText}>
+            Turn on radar to see people nearby.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.enableButton}
+            onPress={async () => {
+              await supabase
+                .from("profiles")
+                .update({ radar_enabled: true })
+                .eq("id", (await supabase.auth.getUser()).data.user?.id);
+
+              setRadarEnabled(true);
+              fetchDiscoverFeed(); // refresh sphere
+            }}
+          >
+            <Text style={styles.enableText}>Enable Radar</Text>
+          </TouchableOpacity>
+        </Card>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -213,7 +416,7 @@ export default function AvatarSphere() {
             >
               <Avatar.Image
                 size={48}
-                source={{ uri: n.uri }}
+                source={{ uri: n.avatar_url }}
                 onTouchEnd={() => handleAvatarPress(n)}
                 style={focused?.id === n.id && styles.focusedAvatar}
               />
@@ -253,16 +456,44 @@ export default function AvatarSphere() {
             {focused && (
               <View style={styles.sheetContent}>
                 <Avatar.Image
+                  key={focused.id}
                   size={120}
-                  source={{ uri: focused.uri }}
+                  source={{
+                    uri:
+                      focused.avatar_url ??
+                      `https://i.pravatar.cc/300?u=${focused.id}`,
+                  }}
                   style={styles.bigAvatar}
                 />
 
                 <Text style={styles.sheetName}>{focused.name}</Text>
-                <Text style={styles.sheetDesc}>{focused.description}</Text>
-
+                <Text style={styles.sheetDesc}>{focused.bio}</Text>
+                {focused.interests?.length > 0 ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      marginTop: 10,
+                    }}
+                  >
+                    {focused.interests.map((interest: string) => (
+                      <Text key={interest} style={styles.interestChip}>
+                        {interest}
+                      </Text>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.noInterests}>No interests added yet</Text>
+                )}
                 <View style={styles.statsRow}>
-                  <Card style={styles.statCard} elevation={2}>
+                  <Card
+                    style={styles.statCard}
+                    elevation={2}
+                    onPress={() => {
+                      if (!focused) return;
+                      sendHeadsUp(focused.id);
+                    }}
+                  >
                     <Card.Content style={styles.statContent}>
                       <MaterialCommunityIcons
                         name="hand-wave-outline"
@@ -278,6 +509,14 @@ export default function AvatarSphere() {
                     elevation={2}
                     onPress={() => {
                       closeSheet();
+
+                      router.push({
+                        pathname: "/screens/chat/chatMessages/[chatId]",
+                        params: {
+                          chatId: "draft",
+                          otherUserId: focused.id,
+                        },
+                      });
                     }}
                   >
                     <Card.Content style={styles.statContent}>
@@ -395,5 +634,56 @@ const styles = StyleSheet.create({
   statLabel: {
     marginTop: 4,
     color: "#666",
+  },
+
+  disabledContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  disabledCard: {
+    width: "100%",
+    padding: 24,
+    borderRadius: 20,
+    alignItems: "center",
+  },
+  disabledTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  disabledText: {
+    textAlign: "center",
+    color: "#666",
+    marginBottom: 20,
+  },
+  enableButton: {
+    backgroundColor: "#6FBAFF",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 999,
+  },
+  enableText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  interestChip: {
+    backgroundColor: "#E9D5FF",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    fontSize: 12,
+    marginRight: 6,
+    marginBottom: 6,
+    color: "#4C1D95",
+  },
+
+  noInterests: {
+    marginTop: 8,
+    fontSize: 13,
+    color: "#666",
+    fontStyle: "italic",
   },
 });

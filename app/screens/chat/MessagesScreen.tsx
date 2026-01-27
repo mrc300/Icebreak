@@ -48,7 +48,7 @@ export default function MessagesScreen() {
     console.log("LOGGED IN USER ID:", user?.id);
     if (!user) return;
 
-    // 1️⃣ Get chat IDs
+  
     const { data: memberships, error } = await supabase
       .from("chat_members")
       .select("chat_id")
@@ -69,7 +69,7 @@ export default function MessagesScreen() {
       .in("chat_id", chatIds);
 
     console.log("OTHER MEMBERS:", members);
-    // 3️⃣ Get profiles
+ 
     const userIds = members?.map((m) => m.user_id) ?? [];
     console.log("OTHER USER IDS:", userIds);
     const { data: profiles } = await supabase
@@ -77,7 +77,7 @@ export default function MessagesScreen() {
       .select("id, name, avatar_url")
       .in("id", userIds);
     console.log("PROFILES:", profiles);
-    // 4️⃣ Get last messages
+    
     const { data: messages } = await supabase
       .from("messages")
       .select("chat_id, content, created_at, sender_id")
@@ -85,7 +85,6 @@ export default function MessagesScreen() {
       .in("chat_id", chatIds)
       .order("created_at", { ascending: false });
 
-    // Build lookup maps (THIS is the key)
     const myMemberByChat = new Map(
       members?.filter((m) => m.user_id === user.id).map((m) => [m.chat_id, m]),
     );

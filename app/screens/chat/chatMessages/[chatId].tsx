@@ -22,7 +22,12 @@ type Message = {
 };
 
 export default function ChatScreen() {
-  const { chatId } = useLocalSearchParams<{ chatId: string }>();
+  const { chatId, otherUserId } = useLocalSearchParams<{
+    chatId?: string;
+    otherUserId?: string;
+  }>();
+
+  const isDraft = chatId === "draft";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -32,19 +37,34 @@ export default function ChatScreen() {
     avatar_url: string | null;
   } | null>(null);
 
-  // 🔹 Load current user once
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setCurrentUserId(data.user?.id ?? null);
     });
   }, []);
 
-  // 🔹 Load messages + other user + realtime
   useEffect(() => {
     if (!chatId) return;
 
-    loadMessages();
-    loadOtherUser();
+    setMessages([]);
+  }, [chatId]);
+
+  useEffect(() => {
+    if (!chatId) return;
+    if (chatId === "draft") {
+      loadDraftUser();
+      return;
+    }
+
+    let cancelled = false;
+
+    const load = async () => {
+      await loadMessages();
+      if (cancelled) return;
+      await loadOtherUser();
+    };
+
+    load();
 
     const channel = supabase
       .channel(`chat-${chatId}`)
@@ -63,6 +83,7 @@ export default function ChatScreen() {
       .subscribe();
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
     };
   }, [chatId]);
@@ -70,7 +91,7 @@ export default function ChatScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!chatId || !currentUserId) return;
-
+      if (chatId === "draft") return;
       const markRead = async () => {
         const { error } = await supabase
           .from("chat_members")
@@ -85,7 +106,18 @@ export default function ChatScreen() {
     }, [chatId, currentUserId]),
   );
 
-  // 1️⃣ Load messages
+  async function loadDraftUser() {
+    if (!otherUserId) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name, avatar_url")
+      .eq("id", otherUserId)
+      .single();
+
+    setOtherUser(profile);
+  }
+
   async function loadMessages() {
     const { data } = await supabase
       .from("messages")
@@ -96,7 +128,6 @@ export default function ChatScreen() {
     setMessages(data ?? []);
   }
 
-  // 2️⃣ Load other user
   async function loadOtherUser() {
     const {
       data: { user },
@@ -122,27 +153,62 @@ export default function ChatScreen() {
     setOtherUser(profile);
   }
 
-  async function sendMessage() {
-    if (!input.trim() || !currentUserId) return;
+async function sendMessage() {
+  if (!input.trim() || !currentUserId) return;
 
-    const optimisticMessage: Message = {
-      id: `temp-${Date.now()}`,
+  let activeChatId: string;
+
+  if (isDraft && otherUserId) {
+    const { data: chatIdFromRpc, error } = await supabase.rpc(
+      "create_chat_with_members",
+      { other_user: otherUserId }
+    );
+
+    if (error || !chatIdFromRpc) {
+      console.error("Create chat error:", error);
+      return;
+    }
+
+    activeChatId = chatIdFromRpc;
+
+    await supabase.from("messages").insert({
+      chat_id: activeChatId,
       sender_id: currentUserId,
       content: input,
-      created_at: new Date().toISOString(),
-    };
+    });
 
-    // 1️⃣ Show instantly
-    setMessages((prev) => [...prev, optimisticMessage]);
     setInput("");
 
-    // 2️⃣ Save to DB
-    await supabase.from("messages").insert({
-      chat_id: chatId,
-      sender_id: currentUserId,
-      content: optimisticMessage.content,
+    router.replace({
+      pathname: "/screens/chat/chatMessages/[chatId]",
+      params: { chatId: activeChatId },
     });
+
+    return;
   }
+
+
+  if (!chatId || chatId === "draft") return;
+
+  activeChatId = chatId;
+
+  
+  const optimisticMessage: Message = {
+    id: `temp-${Date.now()}`,
+    sender_id: currentUserId,
+    content: input,
+    created_at: new Date().toISOString(),
+  };
+
+  setMessages((prev) => [...prev, optimisticMessage]);
+  setInput("");
+
+  await supabase.from("messages").insert({
+    chat_id: activeChatId,
+    sender_id: currentUserId,
+    content: optimisticMessage.content,
+  });
+}
 
   return (
     <LinearGradient
