@@ -87,15 +87,23 @@ export default function SettingsScreen() {
         data={settingsOptions}
         keyExtractor={(item) => item.label}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.optionRow}>
-            <View style={styles.optionLeft}>
-              {item.icon}
-              <Text style={styles.optionText}>{item.label}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#555" />
-          </TouchableOpacity>
-        )}
+       renderItem={({ item }) => (
+  <TouchableOpacity
+    style={styles.optionRow}
+    onPress={() => {
+      if (item.label === "Privacy") {
+        router.push("/screens/profile/privacy");
+      }
+    }}
+  >
+    <View style={styles.optionLeft}>
+      {item.icon}
+      <Text style={styles.optionText}>{item.label}</Text>
+    </View>
+    <Ionicons name="chevron-forward" size={24} color="#555" />
+  </TouchableOpacity>
+)}
+
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         showsVerticalScrollIndicator={false}
       />
