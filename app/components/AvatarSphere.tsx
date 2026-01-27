@@ -3,6 +3,7 @@ import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   Animated,
   Dimensions,
@@ -77,7 +78,6 @@ export default function usersphere() {
 
     if (!user) return;
 
-    // 1️⃣ Create or reuse chat
     const { data: chatId, error } = await supabase.rpc(
       "create_chat_with_members",
       { other_user: otherUserId },
@@ -123,12 +123,12 @@ export default function usersphere() {
 
       setRadarEnabled(profile?.radar_enabled ?? false);
 
-      const lat = 55.6761;
-      const lng = 12.5683;
+      //const lat = 55.6761;
+      //const lng = 12.5683;
 
       const { data: nearby, error: nearbyError } = await supabase.rpc(
         "nearby_users",
-        { lat, lng, radius_m: 100 },
+        { radius_m: 100 },
       );
 
       if (nearbyError) throw nearbyError;
@@ -382,154 +382,170 @@ export default function usersphere() {
 
   return (
     <>
-      <View style={styles.container} {...panResponder.panHandlers}>
-        <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
-          {lines.map((l) => (
-            <Line
-              key={l.key}
-              x1={l.x1}
-              y1={l.y1}
-              x2={l.x2}
-              y2={l.y2}
-              stroke="rgba(0,0,0,0.25)"
-              strokeWidth={1}
-              opacity={l.opacity}
-            />
-          ))}
-        </Svg>
+      {!loading && radarEnabled && users.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>No one nearby right now</Text>
+          <Text style={styles.emptySubtitle}>
+            IceBreak shows people within 100 meters. Move around or check again
+            later 👀
+          </Text>
+        </View>
+      ) : (
+        <>
+          <View style={styles.container} {...panResponder.panHandlers}>
+            <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
+              {lines.map((l) => (
+                <Line
+                  key={l.key}
+                  x1={l.x1}
+                  y1={l.y1}
+                  x2={l.x2}
+                  y2={l.y2}
+                  stroke="rgba(0,0,0,0.25)"
+                  strokeWidth={1}
+                  opacity={l.opacity}
+                />
+              ))}
+            </Svg>
 
-        {nodes
-          .sort((a, b) => a.z - b.z)
-          .map((n) => (
-            <View
-              key={n.id}
+            {nodes
+              .sort((a, b) => a.z - b.z)
+              .map((n) => (
+                <View
+                  key={n.id}
+                  style={[
+                    styles.avatar,
+                    {
+                      left: n.left,
+                      top: n.top,
+                      transform: [{ scale: n.scale }],
+                      opacity: n.opacity,
+                      zIndex: Math.floor(n.z),
+                    },
+                  ]}
+                >
+                  <Avatar.Image
+                    size={48}
+                    source={{ uri: n.avatar_url }}
+                    onTouchEnd={() => handleAvatarPress(n)}
+                    style={focused?.id === n.id && styles.focusedAvatar}
+                  />
+                </View>
+              ))}
+          </View>
+
+          {focused && (
+            <TouchableOpacity activeOpacity={0.9} onPress={openSheet}>
+              <Card style={styles.preview}>
+                <Text style={styles.name}>{focused.name}</Text>
+                <Text style={styles.subtitle}>Tap to view profile</Text>
+              </Card>
+            </TouchableOpacity>
+          )}
+
+          <Modal transparent visible={sheetVisible} animationType="fade">
+            <Pressable style={styles.sheetBackdrop} onPress={closeSheet} />
+
+            <Animated.View
               style={[
-                styles.avatar,
+                styles.sheet,
                 {
-                  left: n.left,
-                  top: n.top,
-                  transform: [{ scale: n.scale }],
-                  opacity: n.opacity,
-                  zIndex: Math.floor(n.z),
+                  transform: [{ translateY }],
                 },
               ]}
             >
-              <Avatar.Image
-                size={48}
-                source={{ uri: n.avatar_url }}
-                onTouchEnd={() => handleAvatarPress(n)}
-                style={focused?.id === n.id && styles.focusedAvatar}
-              />
-            </View>
-          ))}
-      </View>
+              <LinearGradient
+                colors={["#FFFFFF", "#A4E4FF6E", "#FFC8E9B8"]}
+                locations={[0.43, 0.8, 1]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.sheetGradient}
+              >
+                <View style={styles.handle} />
 
-      {focused && (
-        <TouchableOpacity activeOpacity={0.9} onPress={openSheet}>
-          <Card style={styles.preview}>
-            <Text style={styles.name}>{focused.name}</Text>
-            <Text style={styles.subtitle}>Tap to view profile</Text>
-          </Card>
-        </TouchableOpacity>
-      )}
+                {focused && (
+                  <View style={styles.sheetContent}>
+                    <Avatar.Image
+                      key={focused.id}
+                      size={120}
+                      source={{
+                        uri:
+                          focused.avatar_url ??
+                          `https://i.pravatar.cc/300?u=${focused.id}`,
+                      }}
+                      style={styles.bigAvatar}
+                    />
 
-      <Modal transparent visible={sheetVisible} animationType="fade">
-        <Pressable style={styles.sheetBackdrop} onPress={closeSheet} />
+                    <Text style={styles.sheetName}>{focused.name}</Text>
+                    <Text style={styles.sheetDesc}>{focused.bio}</Text>
 
-        <Animated.View
-          style={[
-            styles.sheet,
-            {
-              transform: [{ translateY }],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={["#FFFFFF", "#A4E4FF6E", "#FFC8E9B8"]}
-            locations={[0.43, 0.8, 1]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.sheetGradient}
-          >
-            <View style={styles.handle} />
-
-            {focused && (
-              <View style={styles.sheetContent}>
-                <Avatar.Image
-                  key={focused.id}
-                  size={120}
-                  source={{
-                    uri:
-                      focused.avatar_url ??
-                      `https://i.pravatar.cc/300?u=${focused.id}`,
-                  }}
-                  style={styles.bigAvatar}
-                />
-
-                <Text style={styles.sheetName}>{focused.name}</Text>
-                <Text style={styles.sheetDesc}>{focused.bio}</Text>
-                {focused.interests?.length > 0 ? (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      marginTop: 10,
-                    }}
-                  >
-                    {focused.interests.map((interest: string) => (
-                      <Text key={interest} style={styles.interestChip}>
-                        {interest}
+                    {focused.interests?.length > 0 ? (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          flexWrap: "wrap",
+                          marginTop: 10,
+                        }}
+                      >
+                        {focused.interests.map((interest: string) => (
+                          <Text key={interest} style={styles.interestChip}>
+                            {interest}
+                          </Text>
+                        ))}
+                      </View>
+                    ) : (
+                      <Text style={styles.noInterests}>
+                        No interests added yet
                       </Text>
-                    ))}
+                    )}
+
+                    <View style={styles.statsRow}>
+                      <Card
+                        style={styles.statCard}
+                        elevation={2}
+                        onPress={() => sendHeadsUp(focused.id)}
+                      >
+                        <Card.Content style={styles.statContent}>
+                          <MaterialCommunityIcons
+                            name="hand-wave-outline"
+                            size={24}
+                            color="#6FBAFF"
+                          />
+                          <Text style={styles.statNumber}>Heads Up</Text>
+                        </Card.Content>
+                      </Card>
+
+                      <Card
+                        style={styles.statCard}
+                        elevation={2}
+                        onPress={() => {
+                          closeSheet();
+                          router.push({
+                            pathname: "/screens/chat/chatMessages/[chatId]",
+                            params: {
+                              chatId: "draft",
+                              otherUserId: focused.id,
+                            },
+                          });
+                        }}
+                      >
+                        <Card.Content style={styles.statContent}>
+                          <FontAwesome
+                            name="comment"
+                            size={24}
+                            color="#6FBAFF"
+                          />
+                          <Text style={styles.statNumber}>Chat</Text>
+                        </Card.Content>
+                      </Card>
+                    </View>
                   </View>
-                ) : (
-                  <Text style={styles.noInterests}>No interests added yet</Text>
                 )}
-                <View style={styles.statsRow}>
-                  <Card
-                    style={styles.statCard}
-                    elevation={2}
-                    onPress={() => {
-                      if (!focused) return;
-                      sendHeadsUp(focused.id);
-                    }}
-                  >
-                    <Card.Content style={styles.statContent}>
-                      <MaterialCommunityIcons
-                        name="hand-wave-outline"
-                        size={24}
-                        color="#6FBAFF"
-                      />
-                      <Text style={styles.statNumber}>Heads Up</Text>
-                    </Card.Content>
-                  </Card>
-
-                  <Card
-                    style={styles.statCard}
-                    elevation={2}
-                    onPress={() => {
-                      closeSheet();
-
-                      router.push({
-                        pathname: "/screens/chat/chatMessages/[chatId]",
-                        params: {
-                          chatId: "draft",
-                          otherUserId: focused.id,
-                        },
-                      });
-                    }}
-                  >
-                    <Card.Content style={styles.statContent}>
-                      <FontAwesome name="comment" size={24} color="#6FBAFF" />
-                      <Text style={styles.statNumber}>Chat</Text>
-                    </Card.Content>
-                  </Card>
-                </View>
-              </View>
-            )}
-          </LinearGradient>
-        </Animated.View>
-      </Modal>
+              </LinearGradient>
+            </Animated.View>
+          </Modal>
+        </>
+      )}
     </>
   );
 }
@@ -678,6 +694,24 @@ const styles = StyleSheet.create({
     marginRight: 6,
     marginBottom: 6,
     color: "#4C1D95",
+  },
+
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+    
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
   },
 
   noInterests: {

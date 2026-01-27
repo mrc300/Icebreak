@@ -16,7 +16,7 @@ export default function PrivacyScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // 🔄 Load radar state from DB
+ 
   useEffect(() => {
     const loadPrivacy = async () => {
       const {
@@ -42,7 +42,6 @@ export default function PrivacyScreen() {
     loadPrivacy();
   }, []);
 
-  // 🔐 Toggle radar in DB
   const toggleRadar = async (value: boolean) => {
     setRadarEnabled(value);
     setSaving(true);
@@ -60,7 +59,7 @@ export default function PrivacyScreen() {
 
     if (error) {
       console.error("Update radar error:", error);
-      // rollback UI if failed
+     
       setRadarEnabled(!value);
     }
 
@@ -73,7 +72,7 @@ export default function PrivacyScreen() {
       locations={[0.43, 0.8, 1]}
       style={styles.container}
     >
-      {/* HEADER */}
+  
       <View style={styles.topBar}>
         <Ionicons
           name="chevron-back-outline"
@@ -85,7 +84,7 @@ export default function PrivacyScreen() {
         <View style={{ width: 26 }} />
       </View>
 
-      {/* RADAR CARD */}
+  
       <View style={styles.card}>
         <View style={styles.cardLeft}>
           <MaterialCommunityIcons name="radar" size={22} color="#555" />
@@ -108,7 +107,6 @@ export default function PrivacyScreen() {
         )}
       </View>
 
-      {/* INFO TEXT */}
       <Text style={styles.infoText}>
         When radar is turned off, you won’t appear to nearby users and you won’t
         see people around you.

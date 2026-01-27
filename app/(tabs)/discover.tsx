@@ -70,15 +70,11 @@ export default function DiscoverScreen() {
         return;
       }
 
-      //temp cordinates for testing we have use gps later
-      const lat = 55.6761;
-      const lng = 12.5683;
+   
 
       const { data: nearby, error: nearbyError } = await supabase.rpc(
         "nearby_users",
         {
-          lat,
-          lng,
           radius_m: 100,
         },
       );
