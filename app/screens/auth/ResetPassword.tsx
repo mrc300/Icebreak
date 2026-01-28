@@ -3,43 +3,63 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
+import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
+
 
 export default function ResetPassword() {
-  const { email } = useLocalSearchParams<{ email?: string }>();
 
+  
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+
+
+useEffect(() => {
+  supabase.auth.getSession().then(({ data }) => {
+    if (!data.session) {
+      router.replace("/screens/auth/LoginScreen");
+    }
+  });
+}, []);
+
+
+
   const handleReset = async () => {
-    if (!password || !confirmPassword) {
-      alert("Please fill in all fields");
+  if (loading) return;
+  if (!password || !confirmPassword) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert("Passwords do not match");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+
+
+    if (error) {
+      alert(error.message);
       return;
     }
+    await supabase.auth.signOut();
 
-    // if (password.length < 6) {
-    //   alert("Password must be at least 6 characters");
-    //   return;
-    // }
+    alert("Password updated successfully");
+    
+    router.replace("/screens/auth/LoginScreen");
+  } finally {
+    setLoading(false);
+  }
+};
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // TODO:
-      // 1. Update password with Supabase
-      // 2. Auto login
-      router.replace("/(tabs)/home");
-
-      //   console.log("Password reset for:", email);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <KeyboardAvoidingView

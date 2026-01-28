@@ -1,6 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
+import { supabase } from "@/lib/supabase";
+
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,28 +16,32 @@ export default function ForgotPasswordEmail() {
   const [email, setEmail] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
-  const handleSendOtp = async () => {
-    if (!email) {
-      alert("Please enter your email address");
+  
+const handleSendOtp = async () => {
+  if (!email) {
+    alert("Please enter your email address");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+    if (error) {
+      alert(error.message);
       return;
     }
 
-    try {
-      setLoading(true);
+    router.push({
+      pathname: "/screens/auth/ForgotPasswordOTP",
+      params: { email },
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
-      // TODO:
-      // 1. Call Supabase OTP / password recovery API
-      // 2. Navigate to OTP verification screen
-      router.push({
-        pathname: "/screens/auth/ForgotPasswordOTP",
-        params: { email },
-      });
-
-      //   console.log("OTP requested for:", email);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <KeyboardAvoidingView
