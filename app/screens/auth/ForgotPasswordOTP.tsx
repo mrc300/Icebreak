@@ -62,7 +62,9 @@ export default function ForgotPasswordOTP() {
         return;
       }
 
-      router.replace("/screens/auth/ResetPassword");
+      router.replace({
+          pathname: "/screens/auth/ResetPassword",
+        });
     } finally {
       setLoading(false);
     }
@@ -85,7 +87,7 @@ export default function ForgotPasswordOTP() {
           </Text>
 
           <Text style={styles.subtitle}>
-            Enter the 6-digit code sent to{"\n"}
+            Enter the 8-digit code sent to{"\n"}
             <Text style={styles.email}>{email}</Text>
           </Text>
 

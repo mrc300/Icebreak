@@ -13,7 +13,7 @@ export default function InterestsScreen() {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   useEffect(() => {
     supabase
       .from("interests")
@@ -23,45 +23,41 @@ export default function InterestsScreen() {
       });
   }, []);
 
-
-
   const toggle = (id: number) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
-const saveInterests = async () => {
-  if (loading) return;
+  const saveInterests = async () => {
+    if (loading) return;
 
-  if (selected.length === 0) {
-    alert("Select at least one interest");
-    return;
-  }
+    if (selected.length === 0) {
+      alert("Select at least one interest");
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    setLoading(false);
-    return;
-  }
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-  const rows = selected.map((interestId) => ({
-    user_id: user.id,
+    const rows = selected.map((interestId) => ({
+      user_id: user.id,
       interest_id: interestId,
     }));
 
     await supabase.from("user_interests").insert(rows);
 
-
     setLoading(false);
 
     router.push("/screens/onboarding/AvatarScreen");
-
   };
 
   return (
@@ -97,6 +93,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
+    justifyContent: "center",
   },
   title: {
     marginBottom: 16,
@@ -104,7 +101,9 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
+    //justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
+
   },
 });

@@ -23,12 +23,23 @@ export default function ScreenLayout() {
         setOnboardingComplete(null);
 
         if (event === "SIGNED_IN" && session?.user) {
-          await supabase.from("profiles").upsert({
-            id: session.user.id,
+        const userId = session.user.id;
+
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", userId)
+          .single();
+
+        if (!existingProfile) {
+          await supabase.from("profiles").insert({
+            id: userId,
             name: session.user.user_metadata?.name ?? null,
             onboarding_completed: false,
           });
         }
+      }
+
       },
     );
 
@@ -52,7 +63,7 @@ export default function ScreenLayout() {
           return;
         }
 
-        setOnboardingComplete(data?.onboarding_completed ?? false);
+       setOnboardingComplete(data?.onboarding_completed ?? false);
       });
   }, [session]);
 
